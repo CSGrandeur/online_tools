@@ -9,21 +9,33 @@ class Fft extends Controller
 	}
 	public function imgupload()
 	{
-		$rpath = './fft/userfile/';
-		$extension = ['jpg', 'gif', 'png', 'jpeg', 'bmp'];
-		$savename = trim(input('filename'));
-		$res = uploadfile($savename, $rpath, $extension);
-		if(!$res['info'])
+		$data['info'] = uploadfile(
+			((string)time()).'_'.(string)rand(),
+			"fft/userfile/"
+		);
+		ob_clean();   //清空输出缓存，避免干扰json
+		return $data;
+	}
+	public function imgfft()
+	{
+		$imgpath = rtrim(input('imgpath'), '\\/');
+		$imgname = trim(input('imgname', '\\/'));
+		$script = str_replace('\\', '/', (
+			"/mnt/softwares/anaconda/bin/python ".
+			ROOTPATH.'/../application/index/tools/fft.py '.
+			UPLOAD_ROOT.$imgpath.'/ '.
+			$imgname
+		));
+		exec($script, $res);
+		if($res[0] == 'successful')
 		{
-			$data['wrongcode'] = 'file_error';
-			$data['wrongmsg'] = $res['error'];
+			return [
+				'res' => $res[0],
+				'input_img_fft' => $res[1],
+				'output_img_fft' => $res[2],
+			];
 		}
 		else
-		{
-			$data['src'] = '/static/upload' . $rpath . $res['info']['savename'];
-		}
-		ob_clean();   //清空输出缓存，避免干扰json
-
-		return $data;
+			return ['res' => $res[0]];
 	}
 }
